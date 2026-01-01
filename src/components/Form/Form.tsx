@@ -72,7 +72,7 @@ export function Form() {
         />
 
         {/* ✅ reCAPTCHA v2 checkbox */}
-        <ReCAPTCHA
+        {/* <ReCAPTCHA
           sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY!}
           onChange={(token) => {
             setCaptchaToken(token)
@@ -82,16 +82,15 @@ export function Form() {
             setCaptchaToken(null)
             setIsHuman(false)
           }}
-        />
+        /> */}
 
         <button
           type="submit"
           disabled={
             state.submitting ||
             !validEmail ||
-            !message ||
-            !isHuman ||
-            !captchaToken
+            !message 
+           
           }
         >
           {state.submitting ? 'Sending...' : 'Submit'}
