@@ -1,103 +1,108 @@
-import { Container, ContainerSucces } from './styles'
-import { useForm, ValidationError } from '@formspree/react'
-import { toast, ToastContainer } from 'react-toastify'
-import ReCAPTCHA from 'react-google-recaptcha'
-import { useEffect, useState } from 'react'
-import validator from 'validator'
+import { useState, FormEvent } from "react";
+import emailjs from "@emailjs/browser";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-export function Form() {
-  const [state, handleSubmit] = useForm('xknkpqry')
+const Form = () => {
+  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState<string>("");
 
-  const [validEmail, setValidEmail] = useState(false)
-  const [isHuman, setIsHuman] = useState(false)
-  const [message, setMessage] = useState('')
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [message, setMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  function verifyEmail(email: string) {
-    setValidEmail(validator.isEmail(email))
-  }
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
 
-  useEffect(() => {
-    if (state.succeeded) {
-      toast.success('Email successfully sent!', {
-        position: toast.POSITION.BOTTOM_LEFT,
-        pauseOnFocusLoss: false,
-        closeOnClick: true,
-        hideProgressBar: false,
-        toastId: 'succeeded',
+    emailjs
+      .send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID!,
+        process.env.REACT_APP_EMAILJS_TEMPLATE_ID!,
+        {
+          from_email: email,
+          message: message,
+          name:name,
+        },
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY!
+      )
+      .then(() => {
+        toast.success("Message sent successfully 🚀");
+        setEmail("");
+        setMessage("");
       })
-    }
-  }, [state.succeeded])
+      .catch(() => {
+        toast.error("Failed to send message ❌");
+      })
+      .finally(() => setLoading(false));
+  };
+  const styles: { [key: string]: React.CSSProperties } = {
+    form: {
+      maxWidth: "400px",
+      margin: "40px auto",
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+      zIndex:"500",
 
-  if (state.succeeded) {
-    return (
-      <ContainerSucces>
-        <h3>Thanks for getting in touch!</h3>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          Back to the top
-        </button>
-        <ToastContainer />
-      </ContainerSucces>
-    )
-  }
+    },
+    input: {
+      padding: "10px",
+      fontSize: "16px"
+    },
+    textarea: {
+      padding: "10px",
+      fontSize: "16px",
+      minHeight: "120px",
+      resize: "none"
+    },
+    button: {
+      padding: "10px",
+      fontSize: "16px",
+      cursor: "pointer"
+    }
+  };
+  
 
   return (
-    <Container>
-      <h2>Get in touch using the form</h2>
-
-      <form onSubmit={handleSubmit}>
+    <>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <h2>Contact Us</h2>
         <input
-          placeholder="Email"
-          id="email"
-          type="email"
-          name="email"
+          type="name"
+          placeholder="Your Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
-          onChange={(e) => verifyEmail(e.target.value)}
+          style={styles.input}
         />
-
-        <ValidationError prefix="Email" field="email" errors={state.errors} />
+        <input
+          type="email"
+          placeholder="Your Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={styles.input}
+        />
 
         <textarea
-          required
-          placeholder="Send a message to get started."
-          id="message"
-          name="message"
+          placeholder="Your Message"
+          value={message}
           onChange={(e) => setMessage(e.target.value)}
+          required
+          style={styles.textarea}
         />
 
-        <ValidationError
-          prefix="Message"
-          field="message"
-          errors={state.errors}
-        />
-
-        {/* ✅ reCAPTCHA v2 checkbox */}
-        {/* <ReCAPTCHA
-          sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY!}
-          onChange={(token) => {
-            setCaptchaToken(token)
-            setIsHuman(!!token)
-          }}
-          onExpired={() => {
-            setCaptchaToken(null)
-            setIsHuman(false)
-          }}
-        /> */}
-
-        <button
-          type="submit"
-          disabled={
-            state.submitting ||
-            !validEmail ||
-            !message 
-           
-          }
-        >
-          {state.submitting ? 'Sending...' : 'Submit'}
+        <button type="submit" disabled={loading} style={styles.button}>
+          {loading ? "Sending..." : "Send Message"}
         </button>
       </form>
 
-      <ToastContainer />
-    </Container>
-  )
-}
+      <ToastContainer position="bottom-left" autoClose={3000} />
+    </>
+  );
+};
+
+export default Form;
